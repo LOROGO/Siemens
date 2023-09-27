@@ -18,7 +18,7 @@ namespace Siemens
                     break;
                 }
 
-
+                List<string> list = GetUniqueFileTypes(path);
 
 
 
@@ -44,7 +44,24 @@ namespace Siemens
 
         }
 
+        static List<string> GetUniqueFileTypes(string path)
+        {
+            List<string> types = new List<string>();
 
+            string[] files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+
+            foreach (string file in files)
+            {
+                string type = Path.GetExtension(file);
+                if (!string.IsNullOrEmpty(type) && !types.Contains(type))
+                {
+                    types.Add(type);
+
+                }
+            }
+
+            return types;
+        }
 
 
 
