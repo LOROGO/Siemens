@@ -21,7 +21,13 @@ namespace Siemens
                 List<string> list = GetUniqueFileTypes(path);
                 PrintTypes(list);
 
+                string json_path = SaveDialogue();
+                if (!String.IsNullOrEmpty(json_path))
+                {
 
+
+
+                }
 
 
 
@@ -70,7 +76,24 @@ namespace Siemens
 
         }
 
+        static string SaveDialogue()
+        {
+            Console.WriteLine("Save to JSON?");
+            string answer = Console.ReadLine();
 
+            if (!string.IsNullOrEmpty(answer))
+            {
+                if (answer.StartsWith("y") || answer.StartsWith("Y"))
+                {
+                    Console.WriteLine("Please provide the JSON file location:");
+                    string path = Console.ReadLine();
+                   
+                    return path;
+                }
+
+            }
+            return null;
+        }
 
 
 
