@@ -4,15 +4,42 @@ using System.Text.Json;
 
 namespace Siemens
 {
-    public class File_data
+    public class FileData
     {
         public string name { get; set; }
 
         public string type { get; set; }
 
-        public List<File_data> children { get; set; }
+        public List<FileData>? children { get; set; }
 
+        public List<string> GetUniqueFileTypesO()
+        {
+            if (children == null)
+                return null;
+
+            var list = new List<string>();
+            foreach (var file in children)
+            {
+                if (file.type != "directory")
+                {
+                    if (!list.Contains(file.type))
+                    {
+                        list.Add(file.type);
+                    }
+                }
+                else
+                {
+                    var sublist = file.GetUniqueFileTypesO();
+                    list = list.Union(sublist).ToList();
+
+                }
+            }
+
+            return list;
+        }
     }
+
+
     internal class Program
     {
         static void Main(string[] args)
@@ -21,25 +48,49 @@ namespace Siemens
             {
                 string path = GetFolderPath();
 
-                if (path == null)
+                if (path == null || path == "exit")
                 {
                     break;
                 }
 
-                List<string> list = GetUniqueFileTypes(path);
-                PrintTypes(list);
 
-                string json_path = SaveDialogue();
-                if (!String.IsNullOrEmpty(json_path))
+                if (Directory.Exists(path))
                 {
-                    File_data directory_data = ProcessDirectory(path);
-                    var jsonString = JsonSerializer.Serialize(directory_data);
-                    File.WriteAllText(json_path, jsonString);
+
+                    List<string> list = GetUniqueFileTypes(path);
+                    PrintTypes(list);
+                    string jsonPath = SaveDialogue();
+
+                    if (jsonPath != null)
+                    {
+                        FileData directoryData = ProcessDirectory(path);
+                        var jsonString = JsonSerializer.Serialize(directoryData);
+                        SaveToJSON(jsonPath, jsonString);
+
+                    }
+
 
 
                 }
+                else if (Path.GetExtension(path) == ".json")
+                {
+                    string jsonString = File.ReadAllText(path);
+                    FileData directoryData = JsonSerializer.Deserialize<FileData>(jsonString);
+
+                    PrintTypes(directoryData.GetUniqueFileTypesO());
+
+                    string jsonPath = SaveDialogue();
+                    if (jsonPath != null)
+                    {
+                        SaveToJSON(jsonPath, jsonString);
+                        
+
+                    }
 
 
+                }
+                
+                Console.WriteLine("\n");
 
 
             }
@@ -50,13 +101,14 @@ namespace Siemens
         {
             Console.WriteLine("Please provide a folder or a JSON with folder information:");
             string path = Console.ReadLine();
-            if (Directory.Exists(path))
-            {
 
-                return path;
-            }
-            else
+            if (string.IsNullOrEmpty(path))
+            {
                 return null;
+
+            }
+            else return path;
+
 
         }
 
@@ -106,10 +158,10 @@ namespace Siemens
         }
 
 
-        public static File_data ProcessDirectory(string targetDirectory)
+        public static FileData ProcessDirectory(string targetDirectory)
         {
-            File_data file = new File_data();
-            file.children = new List<File_data>();
+            FileData file = new FileData();
+            file.children = new List<FileData>();
             file.type = "directory";
             file.name = Path.GetFileName(targetDirectory);
 
@@ -124,14 +176,43 @@ namespace Siemens
             return file;
         }
 
-        public static File_data ProcessFile(string path)
+        public static FileData ProcessFile(string path)
         {
-            File_data file = new File_data();
+            FileData file = new FileData();
 
             file.type = Path.GetExtension(path);
             file.name = Path.GetFileName(path);
             return file;
 
+        }
+
+        public static void SaveToJSON(string jsonPath, string jsonString)
+        {
+            try
+            {
+                File.WriteAllText(jsonPath, jsonString);
+                //Console.WriteLine("JSON data has been successfully saved.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"Error: Unauthorized Access - {ex.Message}");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                Console.WriteLine($"Error: Directory Not Found - {ex.Message}");
+            }
+            catch (PathTooLongException ex)
+            {
+                Console.WriteLine($"Error: Path Too Long - {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Error: IO Exception - {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+            }
         }
 
 
