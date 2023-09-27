@@ -19,7 +19,7 @@ namespace Siemens
                 }
 
                 List<string> list = GetUniqueFileTypes(path);
-
+                PrintTypes(list);
 
 
 
@@ -63,6 +63,12 @@ namespace Siemens
             return types;
         }
 
+        static void PrintTypes(List<string> types)
+        {
+            string result = string.Join(", ", types);
+            Console.WriteLine($"Extensions found in folder: {result}");
+
+        }
 
 
 
